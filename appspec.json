@@ -1,5 +1,20 @@
 {
-  "settings": [],
+  "settings": [
+ {
+   "id": "line_width",
+   "name": "Line width",
+   "description": "The width of the lines in the plot.",
+   "defaultValue": 2,
+   "type": "INTEGER"
+ },
+ {
+   "id": "legend",
+   "name": "Include legend?",
+   "description": "Should the plot contain a legend?",
+   "defaultValue": false,
+   "type": "CHECKBOX"
+ }
+],
   "providedAppFiles": [],
   "createsArtifacts": false,
   "license": {

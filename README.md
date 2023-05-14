@@ -1,6 +1,4 @@
-# {Name of App}
-
-*Give your app a short and informative title. Please adhere to our convention of Title Case without hyphens (e.g. `My New App`)*
+# Armfield Detect Stationarity in GeoTags
 
 MoveApps
 
@@ -18,14 +16,12 @@ As an **App developer** you should have a look into the [developer README docume
 *Enter here a detailed description of your App. What is it intended to be used for. Which steps of analyses are performed and how. Please be explicit about any detail that is important for use and understanding of the App and its outcomes.*
 
 ### Input data
-*Indicate which type of input data the App requires. Currently only R objects of class `MoveStack` can be used. This will be extend in the future.*
 
-*Example*: MovingPandas TrajectoryCollection in Movebank format
+MovingPandas TrajectoryCollection in Movebank format
 
 ### Output data
-*Indicate which type of output data the App produces to be passed on to subsequent apps. Currently only R objects of class `MoveStack` can be used. This will be extend in the future. In case the App does not pass on any data (e.g. a shiny visualization app), it can be also indicated here that no output is produced to be used in subsequent apps.*
 
-*Example:* MovingPandas TrajectoryCollection in Movebank format
+MovingPandas TrajectoryCollection in Movebank format
 
 ### Artefacts
 *If the App creates artefacts (e.g. csv, pdf, jpeg, shapefiles, etc), please list them here and describe each.*
