@@ -1,3 +1,4 @@
 {
-  "MoveApps": "Python SDK"
+  "min_duration_hours": 60,
+  "max_diameter_meters": 100
 }

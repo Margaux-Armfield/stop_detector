@@ -1,19 +1,19 @@
 {
   "settings": [
  {
-   "id": "line_width",
-   "name": "Line width",
-   "description": "The width of the lines in the plot.",
-   "defaultValue": 2,
-   "type": "INTEGER"
+   "id": "min_duration_hours",
+   "name": "Minimum duration in hours",
+   "description": "The minimum duration in hours that is considered a stop of interest (death or tag loss probable).",
+   "defaultValue": 72,
+   "type": "FLOAT"
  },
  {
-   "id": "legend",
-   "name": "Include legend?",
-   "description": "Should the plot contain a legend?",
-   "defaultValue": false,
-   "type": "CHECKBOX"
- }
+   "id": "max_diameter_meters",
+   "name": "Maximum diameter in meters",
+   "description": "The maximum diameters in meters that the tag's position may move and still be considered a stop.",
+   "defaultValue": 100,
+   "type": "INTEGER"
+ },
 ],
   "providedAppFiles": [],
   "createsArtifacts": false,
