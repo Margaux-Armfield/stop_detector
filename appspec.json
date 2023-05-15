@@ -14,7 +14,14 @@
    "defaultValue": 100,
    "type": "INTEGER"
  },
-],
+    {
+   "id": "final_stop_only",
+   "name": "If only the last stop in a trajectory (most recent) should be used",
+   "description": "If more than one stop exist in a given trajectory, should only the last (most recent) stop be considered? Default is True (faster), but set to False to consider all stops within a trajectory.",
+   "defaultValue": true,
+   "type": "BOOL"
+ }
+  ],
   "providedAppFiles": [],
   "createsArtifacts": false,
   "license": {
