@@ -252,7 +252,8 @@ class App(object):
         map_output_hmtl = df.explore(
             column="traj_id",
             tooltip="traj_id",
-            m=map.fit_bounds(bounds=[(min_lat, min_lon), (max_lat, max_lon)]),
+            m=map,
+            # .fit_bounds([[min_lat,min_lon], [max_lat, max_lon]]),
             popup=True,  # show all values in popup (on click)
             cmap="Set1",  # use "Set1" matplotlib colormap
             style_kwds=dict(color="black"),  # use black outline
