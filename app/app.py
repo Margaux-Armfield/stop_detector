@@ -7,12 +7,10 @@ from typing import List, Optional
 import folium
 from geopandas import GeoDataFrame
 import pandas as pd
-import geopandas as gpd
-from matplotlib import pyplot as plt
 from movingpandas.geometry_utils import mrr_diagonal
 from movingpandas.time_range_utils import TemporalRange, TemporalRangeWithTrajId
 from movingpandas.trajectory_utils import convert_time_ranges_to_segments
-from pandas import Series
+from pandas import Series, Timestamp
 from shapely import Polygon, MultiPoint, Point
 
 from sdk.moveapps_spec import hook_impl
@@ -52,7 +50,7 @@ class App(object):
         )
 
     @staticmethod
-    def get_stop_to_end_trajectory(traj: Trajectory, stop_end_time) -> Optional[Trajectory]:
+    def get_stop_to_end_trajectory(traj: Trajectory, stop_end_time: Timestamp) -> Optional[Trajectory]:
         """ Gets the trajectory segment between when the last stop occurred and when the last observation was.
         :param traj: the trajectory to be segmented
         :param stop_end_time: the time that the last stop ended
@@ -134,7 +132,10 @@ class App(object):
 
         return []
 
-    def get_last_stop_point(self, trajectory: Trajectory) -> GeoDataFrame | None:
+    def get_last_stop_point(self, trajectory: Trajectory) -> None:
+        """ Gets the final stop point (based on configuration params) in the trajectory.
+        :param trajectory: the trajectory to check for stop detections
+        """
         trajectory.df.sort_values(by=['timestamps'], ascending=False)
 
         detector = TrajectoryStopDetector(trajectory)
@@ -148,7 +149,7 @@ class App(object):
             self.all_stop_points = pd.concat([self.all_stop_points, stop_points])
 
             # get last stop
-            final_stop = stop_points.iloc[[-1]].copy()
+            final_stop: GeoDataFrame = stop_points.iloc[[-1]].copy()
 
             # check if there is further movement after the final stop point
             final_observation_time = trajectory.df.timestamps.max()
@@ -164,7 +165,7 @@ class App(object):
             trajectory.add_speed(overwrite=True, units=("m", "s"))
             final_stop['mean_rate_all_tracks'] = trajectory.df["speed"].mean()
 
-            final_segment = self.get_stop_to_end_trajectory(trajectory, final_stop.end_time[0])
+            final_segment: Optional[Trajectory] = self.get_stop_to_end_trajectory(trajectory, final_stop.end_time[0])
 
             # movement after final stop
             if final_segment is not None:
@@ -175,25 +176,12 @@ class App(object):
                 # add to list of final segments
                 self.segments_after_final_stop.append(final_segment)
             else:
-                print("no final segment: ", final_stop)
+                # no final segment after stop
                 final_stop['distance_traveled_since_final_stop'] = 0
                 final_stop['average_rate_since_final_stop'] = 0
+
             # add to list of stop points
             self.final_stop_points = pd.concat([self.final_stop_points, final_stop])
-
-    def __add_duration_label(self, ax) -> None:
-        """ Adds a label for the stop duration time (hours).
-        :param ax: the plot axis
-        """
-        for x, y, label in zip(self.final_stop_points.geometry.x, self.final_stop_points.geometry.y, self.final_stop_points.duration_s / 3600):
-            annotation = ax.annotate("{:.2f} hours".format(label), xy=(x, y), xytext=(3, 15), textcoords="offset points")
-
-    def __add_traj_id_label(self, ax) -> None:
-        """ Adds a label for trajectory ID to the plot.
-        :param ax: the plot axis
-        """
-        for x, y, label in zip(self.final_stop_points.geometry.x, self.final_stop_points.geometry.y, self.final_stop_points.traj_id):
-            ax.annotate(label, xy=(x, y), xytext=(3, 3), textcoords="offset points")
 
     @staticmethod
     def scale_marker_size(column: Series) -> float:
@@ -221,6 +209,7 @@ class App(object):
         logging.info(f'Running Stop Detection app on {len(data.trajectories)} trajectories with {config}')
         self.app_config = self.map_config(config)  # override with user input
 
+        # iterate through trajectories and look for stops
         for tr in data.trajectories:
             self.get_last_stop_point(tr)
 
@@ -234,7 +223,7 @@ class App(object):
         """ Creates a plot to display stops and final segments.
         :return: None
         """
-        df = self.final_stop_points.copy()
+        df = self.final_stop_points.copy() if self.app_config.final_stop_only else self.all_stop_points
         df['start_time'] = df['start_time'].astype(str)
         df['end_time'] = df['end_time'].astype(str)
         df['final_observation_time'] = df['final_observation_time'].astype(str)
@@ -243,41 +232,34 @@ class App(object):
 
         max_lat = self.final_stop_points.geometry.y.max()
         min_lat = self.final_stop_points.geometry.y.min()
-
         max_lon = self.final_stop_points.geometry.x.max()
         min_lon = self.final_stop_points.geometry.x.min()
 
-        map = folium.Map(location=[df.dissolve().centroid.y, df.dissolve().centroid.x], zoom_start=6)
+        map = folium.Map(location=[df.dissolve().centroid.y.iloc[0], df.dissolve().centroid.x.iloc[0]], zoom_start=6)
 
-        # add final segments to map
-        df1 = TrajectoryCollection(self.segments_after_final_stop).to_traj_gdf().geometry
+        show_final_trajectories = True
+        if show_final_trajectories and len(self.segments_after_final_stop) > 0:
+            # add final segments to map
+            segments_as_dataframe = TrajectoryCollection(self.segments_after_final_stop).to_traj_gdf().geometry
 
-        for i in range(len(df)):
-            locations = []
-            for j in df1[i].coords:
-                locations.append((j[1], j[0]))
+            for i in range(len(segments_as_dataframe)):
+                locations = []
+                for j in segments_as_dataframe[i].coords:
+                    locations.append((j[1], j[0]))
 
-            folium.PolyLine(locations, color="red", weight=2.5, opacity=1).add_to(map)
+                folium.PolyLine(locations, color="red", weight=2.5, opacity=1).add_to(map)
 
-        m = df.explore(
+        map_output_hmtl = df.explore(
             column="traj_id",
             tooltip="traj_id",
-            m=map,
-            # .fit_bounds([[min_lat,min_lon], [max_lat, max_lon]])
+            m=map.fit_bounds(bounds=[(min_lat, min_lon), (max_lat, max_lon)]),
             popup=True,  # show all values in popup (on click)
             cmap="Set1",  # use "Set1" matplotlib colormap
             style_kwds=dict(color="black"),  # use black outline
-            marker_kwds=dict(radius=10, fill=True, opacity=1),  # make marker radius 10px with fill
+            marker_kwds=dict(radius=5, fill=True, opacity=1),  # make marker radius 10px with fill
         )
 
-        m.save('/Users/margauxarmfield/Downloads/test.html')
-
+        map_output_hmtl.save('/Users/margauxarmfield/Downloads/test.html')
 
         # TODO point size based on time
-        marker_size = self.scale_marker_size(self.final_stop_points['duration_s'])
-        # initialize an axis
-        ax = TrajectoryCollection(self.segments_after_final_stop).plot(figsize=(8, 8))
-        self.__add_traj_id_label(ax)
-        # self.__add_duration_label(ax)
-        self.final_stop_points.plot(ax=ax, color='deeppink', markersize=marker_size,
-                                    legend=True, alpha=1, zorder=20)
+        # marker_size = self.scale_marker_size(self.final_stop_points['duration_s'])

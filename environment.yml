@@ -9,3 +9,4 @@ dependencies:
   - movingpandas
   - pluggy
   - python-dotenv
+  - folium=0.14.0

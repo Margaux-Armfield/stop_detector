@@ -1,5 +1,5 @@
 {
-  "min_duration_hours": 60,
-  "max_diameter_meters": 100,
+  "min_duration_hours": 150,
+  "max_diameter_meters": 75,
   "final_stop_only": true
 }

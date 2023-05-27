@@ -4,7 +4,7 @@
    "id": "min_duration_hours",
    "name": "Minimum duration in hours",
    "description": "The minimum duration in hours that is considered a stop of interest (death or tag loss probable).",
-   "defaultValue": 72,
+   "defaultValue": 100,
    "type": "FLOAT"
  },
  {
@@ -19,11 +19,11 @@
    "name": "If only the last stop in a trajectory (most recent) should be used",
    "description": "If more than one stop exist in a given trajectory, should only the last (most recent) stop be considered? Default is True (faster), but set to False to consider all stops within a trajectory.",
    "defaultValue": true,
-   "type": "BOOL"
+   "type": "CHECKBOX"
  }
   ],
   "providedAppFiles": [],
-  "createsArtifacts": false,
+  "createsArtifacts": true,
   "license": {
     "key": "MIT"
   },
@@ -34,10 +34,10 @@
   ],
   "people": [
     {
-      "firstName": "Charles",
+      "firstName": "Margaux",
       "middleInitials": null,
-      "lastName": "Darwin",
-      "email": "creator@example.com",
+      "lastName": "Armfield",
+      "email": "margaux.armfield@gmail.com",
       "roles": [
         "author",
         "creator"
@@ -45,19 +45,6 @@
       "orcid": null,
       "affiliation": null,
       "affiliationRor": null
-    }
-  ],
-  "funding": [
-    {
-      "name": "funder name",
-      "comment": "grant for App"
-    }
-  ],
-  "references": [
-    {
-      "type": "IsDescribedBy",
-      "note": "Darwin, C. 1900. The creation. Journal XY. 1-2",
-      "url": "https://anylink.xyz"
     }
   ],
   "documentation": {
