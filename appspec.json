@@ -4,23 +4,47 @@
    "id": "min_duration_hours",
    "name": "Minimum duration in hours",
    "description": "The minimum duration in hours that is considered a stop of interest (death or tag loss probable).",
-   "defaultValue": 100,
-   "type": "FLOAT"
+   "defaultValue": 120.0,
+   "type": "DOUBLE"
  },
  {
    "id": "max_diameter_meters",
    "name": "Maximum stop diameter in meters",
    "description": "The maximum diameters in meters that the tag's position may move and still be considered a stop.",
-   "defaultValue": 100,
-   "type": "INTEGER"
+   "defaultValue": 100.0,
+   "type": "DOUBLE"
  },
     {
-   "id": "final_stop_only",
-   "name": "Display final stop only",
+   "id": "final_stops_only",
+   "name": "Display final stops only",
    "description": "If more than one stop exist for a given individual, should only the last (most recent) stop be considered? Default is True, but set to False to consider all stops.",
    "defaultValue": true,
    "type": "CHECKBOX"
- }
+ },
+    {
+   "id": "display_trajectories_after_stops",
+   "name": "Display trajectories after stops on map",
+   "description": "Whether any subsequent movement after a stop should be displayed on the map. This can be useful in determining if the stop indicates that the animal's tag has fallen off or or the animal has died. If 'Display final stops only' is true, then only trajectories after a final stop will be displayed. Otherwise, all trajectories after a stop will be displayed.",
+   "defaultValue": true,
+   "type": "CHECKBOX"
+ },
+    {
+      "id": "return_data",
+      "name": "Data returned from app",
+      "description": "The data returned and passed on to the next app in the Workflow, if applicable. This field does not impact the artifacts written at run completion",
+      "defaultValue": "input_data",
+      "type": "RADIOBUTTONS",
+      "options": [
+        {
+          "value": "trajectories",
+          "displayText": "Trajectories after stops"
+        },
+        {
+          "value": "input_data",
+          "displayText": "Input Trajectory Data (no change)"
+        }
+      ]
+    }
   ],
   "providedAppFiles": [],
   "createsArtifacts": true,

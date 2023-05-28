@@ -1,52 +1,79 @@
-import time
-import webbrowser
+from dataclasses import dataclass
+import logging
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import List, Optional
 
 import folium
-from geopandas import GeoDataFrame
 import pandas as pd
+from geopandas import GeoDataFrame
+from movingpandas import TrajectoryCollection, TrajectoryStopDetector, Trajectory
+from movingpandas import trajectory_utils
 from movingpandas.geometry_utils import mrr_diagonal
 from movingpandas.time_range_utils import TemporalRange, TemporalRangeWithTrajId
 from movingpandas.trajectory_utils import convert_time_ranges_to_segments
 from pandas import Series, Timestamp
-from shapely import Polygon, MultiPoint, Point
+from shapely import MultiPoint, Point
 
 from sdk.moveapps_spec import hook_impl
-from movingpandas import TrajectoryCollection, TrajectoryStopDetector, Trajectory
-import logging
-from movingpandas import trajectory_utils
+
 
 @dataclass
 class AppConfig:
     # The minimum number of hours that is considered a stop of interest
     min_duration_hours: float
 
-    # maximum number of meters an animal can move and still be considered "stopped"
+    # The maximum number of meters an animal can move and still be considered "stopped"
     max_diameter_meters: int
 
-    # only look at the final stop in a given trajectory if more than one exist
-    final_stop_only: bool
+    # Whether the app should only look at the final stop in a given trajectory if more than one exist
+    final_stops_only: bool
+
+    # Whether trajectories after final stops should be displayed on the map
+    display_trajectories_after_stops: bool
+
+    # The output data returned from app at completion ("input_data" or "trajectories")
+    return_data: str
+
+    def __post_init__(self):
+        """ Ensures AppConfig was initialized with valid values.
+        """
+        assert self.max_diameter_meters is not None and self.max_diameter_meters > 0
+        assert self.min_duration_hours is not None and self.min_duration_hours > 0
+        assert self.final_stops_only is not None and self.final_stops_only in [True, False]
+        assert self.display_trajectories_after_stops is not None and \
+               self.display_trajectories_after_stops in [True, False]
+        assert self.return_data in ["input_data", "trajectories"]
 
 
 class App(object):
 
     def __init__(self, moveapps_io):
+        """ Initialized this application.
+        :param moveapps_io: utility for input and output
+        """
         self.moveapps_io = moveapps_io
 
         self.all_stop_points = GeoDataFrame()
         self.final_stop_points = GeoDataFrame()
-        self.segments_after_final_stop: List[Trajectory] = []
+
+        self.trajectories_after_all_stops: List[Trajectory] = []
+        self.trajectories_after_final_stop: List[Trajectory] = []
 
         self.app_config = self.map_config({})  # default configuration
 
     @staticmethod
-    def map_config(config: dict):
+    def map_config(config: dict) -> AppConfig:
+        """ Maps a configuration dictionary to an App Config object.
+        :param config: the config dictionary
+        :return: an AppConfig
+        """
         return AppConfig(
-            min_duration_hours=config['min_duration_hours'] if 'min_duration_hours' in config else 72,
-            max_diameter_meters=config['max_diameter_meters'] if 'max_diameter_meters' in config else 100,
-            final_stop_only=config["final_stop_only"] if "final_stop_only" in config else True
+            min_duration_hours=config.get('min_duration_hours', 120),
+            max_diameter_meters=config.get('max_diameter_meters', 100),
+            final_stops_only=config.get("final_stops_only", True),
+            display_trajectories_after_stops=config.get("display_trajectories_after_stops", True),
+            return_data=config.get("return_data", "input_data")
         )
 
     @staticmethod
@@ -106,14 +133,14 @@ class App(object):
 
             if not is_stopped:  # remove points to the specified min_duration
                 while (len(segment_geoms) > 2
-                        and segment_times[-1] - segment_times[0] >= min_duration
+                       and segment_times[-1] - segment_times[0] >= min_duration
                 ):
                     segment_geoms.pop(0)
                     segment_times.pop(0)
                 # after removing extra points, re-generate geometry
                 geom = MultiPoint(segment_geoms)
 
-            if (len(segment_geoms) > 1 and mrr_diagonal(geom, traj.is_latlon) < self.app_config.max_diameter_meters ):
+            if (len(segment_geoms) > 1 and mrr_diagonal(geom, traj.is_latlon) < self.app_config.max_diameter_meters):
                 is_stopped = True
             else:
                 is_stopped = False
@@ -132,8 +159,42 @@ class App(object):
 
         return []
 
-    def get_last_stop_point(self, trajectory: Trajectory) -> None:
-        """ Gets the final stop point (based on configuration params) in the trajectory.
+    def add_stop_data(self, stop: GeoDataFrame, trajectory):
+        """ Add data for stop and segment after stop.
+        :param stop: the stop point to analyze
+        :param trajectory: the trajectory that the stop point is part of
+        """
+        # check if there is further movement after the final stop point
+        final_observation_time = Timestamp(trajectory.df.timestamps.max())
+        stop['final_observation_time'] = final_observation_time
+
+        time_tracked_since_stop = final_observation_time - stop.end_time[0]
+        stop['time_tracked_since_stop'] = time_tracked_since_stop
+
+        # mean_rate_all_tracks
+        trajectory.crs_units = trajectory.df.crs.axis_info[0].unit_name
+        trajectory.add_speed(overwrite=True, units=("m", "s"))
+        stop['mean_rate_all_tracks'] = trajectory.df["speed"].mean()
+
+        segment: Optional[Trajectory] = self.get_stop_to_end_trajectory(trajectory, stop.end_time[0])
+
+        # movement after final stop
+        if segment is not None:
+            segment.add_distance(overwrite=True, name="distance (m)", units="m")
+            stop['distance_traveled_since_stop'] = segment.df['distance (m)'].sum()
+            segment.add_speed(overwrite=True, units=("m", "s"))
+            stop['average_rate_since_stop'] = segment.df.speed.mean()
+            self.trajectories_after_all_stops.append(segment)
+        else:
+            # no final segment after stop
+            stop['distance_traveled_since_stop'] = 0
+            stop['average_rate_since_stop'] = 0
+
+        self.all_stop_points = pd.concat([self.all_stop_points, stop])
+        return segment
+
+    def get_stops(self, trajectory: Trajectory) -> None:
+        """ Gets the stop point(s) based on configuration params and the trajectory.
         :param trajectory: the trajectory to check for stop detections
         """
         trajectory.df.sort_values(by=['timestamps'], ascending=False)
@@ -144,44 +205,25 @@ class App(object):
 
         if not stop_points.empty:
             # sort by end time
-            stop_points.sort_values(by=['end_time'], ascending=False)
+            stop_points.sort_values(by=['end_time'], ascending=True)
+            if len(stop_points) > 1:
+                pass
 
-            self.all_stop_points = pd.concat([self.all_stop_points, stop_points])
+            if not self.app_config.final_stops_only:
+                # get all stop points besides the final one
+                for i in range(len(stop_points) - 1):
+                    stop = stop_points.iloc[[i]].copy()
+                    self.add_stop_data(stop, trajectory)
 
-            # get last stop
+            # get final stop and final segment if it exists
             final_stop: GeoDataFrame = stop_points.iloc[[-1]].copy()
+            final_segment = self.add_stop_data(final_stop, trajectory)
 
-            # check if there is further movement after the final stop point
-            final_observation_time = trajectory.df.timestamps.max()
-            final_stop['final_observation_time'] = final_observation_time
-            # final_stop['distance_moved_from_final_stop'] = distance[1]
-
-            # time_tracked_since_final_stop
-            time_tracked_since_stop = final_observation_time - final_stop.end_time[0]
-            final_stop['time_tracked_since_final_stop'] = time_tracked_since_stop
-
-            # mean_rate_all_tracks
-            trajectory.crs_units = trajectory.df.crs.axis_info[0].unit_name
-            trajectory.add_speed(overwrite=True, units=("m", "s"))
-            final_stop['mean_rate_all_tracks'] = trajectory.df["speed"].mean()
-
-            final_segment: Optional[Trajectory] = self.get_stop_to_end_trajectory(trajectory, final_stop.end_time[0])
-
-            # movement after final stop
-            if final_segment is not None:
-                final_segment.add_distance(overwrite=True, name="distance (m)", units="m")
-                final_stop['distance_traveled_since_final_stop'] = final_segment.df['distance (m)'].sum()
-                final_segment.add_speed(overwrite=True, units=("m", "s"))
-                final_stop['average_rate_since_final_stop'] = final_segment.df.speed.mean()
-                # add to list of final segments
-                self.segments_after_final_stop.append(final_segment)
-            else:
-                # no final segment after stop
-                final_stop['distance_traveled_since_final_stop'] = 0
-                final_stop['average_rate_since_final_stop'] = 0
-
-            # add to list of stop points
+            # add to list of final stop points
             self.final_stop_points = pd.concat([self.final_stop_points, final_stop])
+
+            if final_segment is not None:
+                self.trajectories_after_final_stop.append(final_segment)
 
     @staticmethod
     def scale_marker_size(column: Series) -> float:
@@ -200,67 +242,81 @@ class App(object):
 
     @hook_impl
     def execute(self, data: TrajectoryCollection, config: dict) -> TrajectoryCollection:
-        """
-        Executes the application.
+        """ Executes the application.
         :param data: a collection of trajectories to analyze for stops
         :param config: the app configuration settings
-        :return: a collection of stop trajectories
+        :return: a collection of stop points as trajectories
         """
         logging.info(f'Running Stop Detection app on {len(data.trajectories)} trajectories with {config}')
         self.app_config = self.map_config(config)  # override with user input
 
         # iterate through trajectories and look for stops
         for tr in data.trajectories:
-            self.get_last_stop_point(tr)
+            self.get_stops(tr)
 
         self.generate_plot()
 
-        print(self.final_stop_points)
-        # TODO: output stop points to csv file
-        return self.final_stop_points
+        # write csv output files
+        self.final_stop_points.to_csv(self.moveapps_io.create_artifacts_file('final_stops.csv'))
 
-    def generate_plot(self):
-        """ Creates a plot to display stops and final segments.
-        :return: None
+        if not self.app_config.final_stops_only:
+            self.all_stop_points.to_csv(self.moveapps_io.create_artifacts_file('all_stops.csv'))
+
+        if self.app_config.return_data == "trajectories":
+            if self.app_config.final_stops_only:
+                return TrajectoryCollection(self.trajectories_after_final_stop, traj_id_col="traj_id")
+            else:
+                return TrajectoryCollection(self.trajectories_after_all_stops, traj_id_col="traj_id")
+        return data
+
+    def generate_plot(self) -> None:
+        """ Creates a map to display stops and final trajectories.
         """
-        df = self.final_stop_points.copy() if self.app_config.final_stop_only else self.all_stop_points
-        df['start_time'] = df['start_time'].astype(str)
-        df['end_time'] = df['end_time'].astype(str)
-        df['final_observation_time'] = df['final_observation_time'].astype(str)
-        df["duration_s"] = df['duration_s'].astype(str)
-        df["time_tracked_since_final_stop"] = df['time_tracked_since_final_stop'].astype(str)
+        stops = self.final_stop_points.copy() if self.app_config.final_stops_only else self.all_stop_points.copy()
+        if len(stops) > 0:
+            stops['start_time'] = stops['start_time'].astype(str)
+            stops['end_time'] = stops['end_time'].astype(str)
+            stops['final_observation_time'] = stops['final_observation_time'].astype(str)
+            stops["duration_s"] = stops['duration_s'].astype(str)
+            stops["time_tracked_since_stop"] = stops['time_tracked_since_stop'].astype(str)
 
-        max_lat = self.final_stop_points.geometry.y.max()
-        min_lat = self.final_stop_points.geometry.y.min()
-        max_lon = self.final_stop_points.geometry.x.max()
-        min_lon = self.final_stop_points.geometry.x.min()
+            folium_map = folium.Map(location=[stops.dissolve().centroid.y.iloc[0], stops.dissolve().centroid.x.iloc[0]],
+                                    zoom_start=6)
 
-        map = folium.Map(location=[df.dissolve().centroid.y.iloc[0], df.dissolve().centroid.x.iloc[0]], zoom_start=6)
+            segments = self.trajectories_after_final_stop if self.app_config.final_stops_only \
+                else self.trajectories_after_all_stops
 
-        show_final_trajectories = True
-        if show_final_trajectories and len(self.segments_after_final_stop) > 0:
-            # add final segments to map
-            segments_as_dataframe = TrajectoryCollection(self.segments_after_final_stop).to_traj_gdf().geometry
+            if self.app_config.display_trajectories_after_stops and len(segments) > 0:
+                # add final segments to map
+                segments_as_dataframe = TrajectoryCollection(segments).to_traj_gdf().geometry
 
-            for i in range(len(segments_as_dataframe)):
-                locations = []
-                for j in segments_as_dataframe[i].coords:
-                    locations.append((j[1], j[0]))
+                for i in range(len(segments_as_dataframe)):
+                    locations = []
+                    for j in segments_as_dataframe[i].coords:
+                        locations.append((j[1], j[0]))
 
-                folium.PolyLine(locations, color="red", weight=2.5, opacity=1).add_to(map)
+                    folium.PolyLine(locations, color="red", weight=2.5, opacity=1).add_to(folium_map)
 
-        map_output_hmtl = df.explore(
-            column="traj_id",
-            tooltip="traj_id",
-            m=map,
-            # .fit_bounds([[min_lat,min_lon], [max_lat, max_lon]]),
-            popup=True,  # show all values in popup (on click)
-            cmap="Set1",  # use "Set1" matplotlib colormap
-            style_kwds=dict(color="black"),  # use black outline
-            marker_kwds=dict(radius=5, fill=True, opacity=1),  # make marker radius 10px with fill
-        )
+            map_output_hmtl = stops.explore(
+                column="traj_id",
+                tooltip="traj_id",
+                m=folium_map,
+                legend=True,
+                popup=True,  # show all values in popup (on click)
+                cmap="Set1",  # use "Set1" matplotlib colormap
+                style_kwds=dict(color="black"),  # use black outline
+                marker_kwds=dict(radius=5, fill=True, opacity=10),  # make marker radius 10px with fill
+            )
 
-        map_output_hmtl.save('/Users/margauxarmfield/Downloads/test.html')
-
-        # TODO point size based on time
-        # marker_size = self.scale_marker_size(self.final_stop_points['duration_s'])
+            map_output_hmtl.save(self.moveapps_io.create_artifacts_file('map.html'))
+        else:
+            logging.warning("No stops detected in data set. Could not create map.")
+            with open(self.moveapps_io.create_artifacts_file('empty_map.html'), 'w') as f:
+                f.write('''<html>
+                            <body>         
+                            <p>No stops detected in dataset with configuration: {}</p>
+                            <p>
+                            <p>Consider decreasing duration or increasing diameter.</p> 
+                            </body>
+                            </html>'''.format(self.app_config))
+                f.close()
