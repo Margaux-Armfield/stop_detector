@@ -99,7 +99,7 @@ class App(object):
         stop['final_observation_time'] = final_observation_time
 
         time_tracked_since_stop = final_observation_time - stop.start_time[0]
-        stop['time_tracked_since_stop'] = time_tracked_since_stop
+        stop['time_tracked_since_stop_began'] = time_tracked_since_stop
 
         # mean_rate_all_tracks
         trajectory.crs_units = trajectory.df.crs.axis_info[0].unit_name
@@ -111,14 +111,14 @@ class App(object):
         # movement after final stop
         if segment is not None:
             segment.add_distance(overwrite=True, name="distance (m)", units="m")
-            stop['distance_traveled_since_stop'] = segment.df['distance (m)'].sum()
+            stop['distance_traveled_since_stop_began'] = segment.df['distance (m)'].sum()
             segment.add_speed(overwrite=True, units=("m", "s"))
-            stop['average_rate_since_stop'] = segment.df.speed.mean()
+            stop['average_rate_since_stop_began'] = segment.df.speed.mean()
             self.trajectories_after_all_stops.append(segment)
         else:
             # no final segment after stop
-            stop['distance_traveled_since_stop'] = 0
-            stop['average_rate_since_stop'] = 0
+            stop['distance_traveled_since_stop_began'] = 0
+            stop['average_rate_since_stop_began'] = 0
 
         self.all_stop_points = pd.concat([self.all_stop_points, stop])
         return segment
@@ -208,7 +208,7 @@ class App(object):
             stops['end_time'] = stops['end_time'].astype(str)
             stops['final_observation_time'] = stops['final_observation_time'].astype(str)
             stops["duration_s"] = stops['duration_s'].astype(str)
-            stops["time_tracked_since_stop"] = stops['time_tracked_since_stop'].astype(str)
+            stops["time_tracked_since_stop_began"] = stops['time_tracked_since_stop_began'].astype(str)
 
             folium_map = folium.Map(location=[stops.dissolve().centroid.y.iloc[0], stops.dissolve().centroid.x.iloc[0]],
                                     zoom_start=6)
