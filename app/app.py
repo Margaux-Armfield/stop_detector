@@ -89,76 +89,6 @@ class App(object):
             return trajectory_utils.convert_time_ranges_to_segments(traj, time_range)[0]
         return None
 
-    def get_most_recent_stop_only(self, traj):
-        """ Extracts to most recent long stop from the trajectory.
-        :param traj: the trajectory to check
-        :return: the most recent stop point
-        """
-        stop_time_ranges = self.get_stop_time_range(traj)
-        stops = TrajectoryCollection(
-            convert_time_ranges_to_segments(traj, stop_time_ranges)
-        )
-
-        stop_pts = GeoDataFrame(columns=["geometry"]).set_geometry("geometry")
-        stop_pts["stop_id"] = [track.id for track in stops.trajectories]
-        stop_pts = stop_pts.set_index("stop_id")
-
-        for stop in stops:
-            stop_pts.at[stop.id, "start_time"] = stop.get_start_time()
-            stop_pts.at[stop.id, "end_time"] = stop.get_end_time()
-            pt = Point(stop.df.geometry.x.median(), stop.df.geometry.y.median())
-            stop_pts.at[stop.id, "geometry"] = pt
-            stop_pts.at[stop.id, "traj_id"] = stop.parent.id
-
-        if len(stops) > 0:
-            stop_pts["duration_s"] = (
-                    stop_pts["end_time"] - stop_pts["start_time"]
-            ).dt.total_seconds()
-            stop_pts["traj_id"] = stop_pts["traj_id"].astype(type(stop.parent.id))
-
-        return stop_pts
-
-    def get_stop_time_range(self, traj):
-        segment_geoms = []
-        segment_times = []
-        geom = MultiPoint()
-        is_stopped = False
-        previously_stopped = False
-        min_duration = timedelta(hours=self.app_config.min_duration_hours)
-
-        for index, data in traj.df[traj.get_geom_column_name()].items():
-            segment_geoms.append(data)
-            geom = geom.union(data)
-            segment_times.append(index)
-
-            if not is_stopped:  # remove points to the specified min_duration
-                while (len(segment_geoms) > 2
-                       and segment_times[-1] - segment_times[0] >= min_duration
-                ):
-                    segment_geoms.pop(0)
-                    segment_times.pop(0)
-                # after removing extra points, re-generate geometry
-                geom = MultiPoint(segment_geoms)
-
-            if (len(segment_geoms) > 1 and mrr_diagonal(geom, traj.is_latlon) < self.app_config.max_diameter_meters):
-                is_stopped = True
-            else:
-                is_stopped = False
-
-            if len(segment_geoms) > 1:
-                segment_end = segment_times[-2]
-                segment_begin = segment_times[0]
-                if not is_stopped and previously_stopped:
-                    if (segment_end - segment_begin >= min_duration):  # detected end of a stop
-                        return [TemporalRangeWithTrajId(segment_begin, segment_end, traj.id)]
-
-            previously_stopped = is_stopped
-
-        if is_stopped and segment_times[-1] - segment_times[0] >= min_duration:
-            return [TemporalRangeWithTrajId(segment_times[0], segment_times[-1], traj.id)]
-
-        return []
-
     def add_stop_data(self, stop: GeoDataFrame, trajectory):
         """ Add data for stop and segment after stop.
         :param stop: the stop point to analyze
@@ -168,7 +98,7 @@ class App(object):
         final_observation_time = Timestamp(trajectory.df.timestamps.max())
         stop['final_observation_time'] = final_observation_time
 
-        time_tracked_since_stop = final_observation_time - stop.end_time[0]
+        time_tracked_since_stop = final_observation_time - stop.start_time[0]
         stop['time_tracked_since_stop'] = time_tracked_since_stop
 
         # mean_rate_all_tracks
@@ -176,7 +106,7 @@ class App(object):
         trajectory.add_speed(overwrite=True, units=("m", "s"))
         stop['mean_rate_all_tracks'] = trajectory.df["speed"].mean()
 
-        segment: Optional[Trajectory] = self.get_stop_to_end_trajectory(trajectory, stop.end_time[0])
+        segment: Optional[Trajectory] = self.get_stop_to_end_trajectory(trajectory, stop.start_time[0])
 
         # movement after final stop
         if segment is not None:
@@ -303,12 +233,13 @@ class App(object):
                 m=folium_map,
                 legend=True,
                 popup=True,  # show all values in popup (on click)
-                cmap="Set1",  # use "Set1" matplotlib colormap
+                cmap="tab20",  # use "Set1" matplotlib colormap
                 style_kwds=dict(color="black"),  # use black outline
-                marker_kwds=dict(radius=5, fill=True, opacity=10),  # make marker radius 10px with fill
+                marker_kwds=dict(radius=7, fill=True, opacity=1),  # make marker radius 10px with fill
             )
 
             map_output_hmtl.save(self.moveapps_io.create_artifacts_file('map.html'))
+
         else:
             logging.warning("No stops detected in data set. Could not create map.")
             with open(self.moveapps_io.create_artifacts_file('empty_map.html'), 'w') as f:

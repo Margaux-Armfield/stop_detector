@@ -22,12 +22,39 @@ Stop detection can be useful for a number of conservation interests, as a "long 
 
 In order to detect "long stops", this application makes use of the MovingPandas python library, and allows the user to 
 define a "stop" of interest via the configuration parameters.
-Furthermore, the stops detected are displayed on a map, along with any subsequent movement after the stop was detected 
-if desired (see Settings). View post-stop trajectories may be useful in determining which of the above scenarios the 
-stop represents. For example, if a user is trying to detect deaths or tag loss, a subsequent movement of 200,000 meters 
-may indicate that the animal has not died, but stopped for some other reason. Thus, the user could consider re-running 
-the application with more conservative settings (i.e. increasing stop duration time and / or decreasing stop diameter size).
 
+Furthermore, the stops detected are displayed on a map, along with any subsequent movement after the stop began 
+if desired (see Settings). Viewing the trajectory after the stop began may be useful in determining which of the 
+scenarios (death, tag loss, injury, etc) the stop actually represents. For example, if a user is trying to detect 
+deaths or tag loss, a subsequent movement of 200,000 meters could indicate that the animal has not died, but stopped 
+for some other reason. Thus, the user could consider re-running the application with more conservative settings 
+(i.e. increasing stop duration time and / or decreasing stop diameter size).
+
+### Example Stop Detection in Caribou Dataset
+
+source: Movebank study - 216040785 / Mountain caribou in British Columbia
+
+Say a user wants to detect possible deaths among caribou present in this study. The first time running this application, 
+the user sets the app configuration to the following:
+
+![Caribou Example Settings](resources/local_app_files/uploaded-app-files/example_setting.png)
+
+and sees the following map at output:
+
+![Caribou Example Map](resources/local_app_files/uploaded-app-files/example_map_1.png)
+
+This map shows the location of stop points, along with the trajectory of the animal following the stop. We can see that 
+many of these animals go on to travel great distances, making a death or tag loss unlikely. 
+
+![Caribou Example GIF](resources/local_app_files/uploaded-app-files/example_map.gif)
+
+Perhaps 120 hours spent within 100 meters is not a conservative enough test for whether a caribou has died. We 
+increase the stop_duration to 150 hours, and get the following result:
+
+![Caribou Example GIF 2](resources/local_app_files/uploaded-app-files/example_map2.gif)
+
+which shows much less post stop movement and 
+fewer individuals.
 ### Application Execution
 
 The app iterates through all provided Trajectories and searches for stop points. For each stop detected, a 
@@ -53,7 +80,7 @@ MovingPandas TrajectoryCollection in Movebank format
   - `duration_s`: time dur,final_observation_time,time_tracked_since_stop,mean_rate_all_tracks,distance_traveled_since_stop,average_rate_since_stop
 If the setting `Final stop only` is `False`, an additional csv file will be output:
 - `all_stops.csv` - a csv file containing all the stop points detected matching the configuration parameters, with the following columns:
-    - x
+
 
 ### Settings 
 

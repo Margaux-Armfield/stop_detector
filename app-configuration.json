@@ -1,5 +1,5 @@
 {
-  "min_duration_hours": 100,
+  "min_duration_hours": 150,
   "max_diameter_meters": 100,
   "final_stops_only": true,
   "display_trajectories_after_stops": true,
