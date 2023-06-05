@@ -1,8 +1,8 @@
-# Armfield Detect Stationarity in GeoTags
+# Detect Stops in GeoTag Data (Armfield)
 
 MoveApps
 
-Github repository: *github.com/yourAccount/Name-of-App* *(the link to the repository where the code of the app can be found must be provided)*
+Github repository: *https://github.com/Margaux-Armfield/movement_app* 
 
 ## Description
 

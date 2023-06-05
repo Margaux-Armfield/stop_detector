@@ -17,7 +17,11 @@ class MyTestCase(unittest.TestCase):
         # prepare
         expected: mpd.TrajectoryCollection = pd.read_pickle(os.path.join(ROOT_DIR, 'tests/resources/app/input2.pickle'))
         config: dict = {
-
+            "min_duration_hours": 30,
+            "max_diameter_meters": 100,
+            "final_stop_only": False,
+            "display_trajectories_after_stops": True,
+            "return_data": "input_data"
         }
 
         # execute
@@ -29,13 +33,15 @@ class MyTestCase(unittest.TestCase):
     def test_input2(self):
         # prepare
         input: mpd.TrajectoryCollection = pd.read_pickle(os.path.join(ROOT_DIR, 'tests/resources/app/input2.pickle'))
-        expected: mpd.TrajectoryCollection = pd.read_pickle(os.path.join(ROOT_DIR, 'tests/resources/app/output2.pickle'))
+        expected: mpd.TrajectoryCollection = pd.read_pickle(os.path.join(ROOT_DIR,
+                                                                         'tests/resources/local_app_files/uploaded_only/uploaded-app-files/output2.pickle'))
 
         config: dict = {
             "min_duration_hours": 30,
             "max_diameter_meters": 100,
             "final_stop_only": False,
-            "display_trajectories_after_stops": True
+            "display_trajectories_after_stops": True,
+            "return_data": "trajectories"
         }
 
         # execute
