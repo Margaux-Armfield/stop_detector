@@ -21,7 +21,7 @@ Stop detection can be useful for a number of conservation interests, as a "long 
 (3) is remaining stationary for some other reason related to its biology / life history (hibernation, birth, etc.)
 
 In order to detect "long stops", this application makes use of the MovingPandas python library and allows the user to 
-define a "stop" of interest via the [configuration settings](### settings)).
+define a "stop" of interest via the configuration settings (see *Settings*).
 
 Furthermore, the stops detected are displayed on a map, along with any subsequent movement after the stop began 
 if desired (see Settings). Viewing the trajectory after the stop began may be useful in determining which of the 
@@ -71,7 +71,7 @@ MovingPandas TrajectoryCollection in Movebank format
 ### Output data
 
 MovingPandas TrajectoryCollection in Movebank format: either the original data or the trajectories of detected stops
-(from stop `start_time` to `final_observation_time`), depending on user configuration (see [Settings](### settings)).
+(from stop `start_time` to `final_observation_time`), depending on user configuration (see *Settings*).
 
 ### Artefacts
 
