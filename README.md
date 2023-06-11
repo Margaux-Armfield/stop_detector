@@ -108,7 +108,11 @@ be considered stop. Unit: `meters`.
 ### Null or error handling
 
 **Setting `Minimum duration in hours`:** If no Minium duration is given (NULL), then a default duration of 120 hours (5 days) is set. 
+
 **Setting `Maximum stop diameter`:** If no Maximum stop diameter is given, then a default diameter of 100 meters is set.
+
 **Setting `Final stop only`:** If no selection for Display final stop only is given, then a default value of `True` is set.
+
 **Setting `Display trajectories after stops`:** If no selection for Display trajectories after stops is given, then a default value of `True` is set.
+
 **Setting `Return data`:** If no selection for Return data is given, then a default value of `Trajectories after stops` is set.
