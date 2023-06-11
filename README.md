@@ -1,4 +1,4 @@
-# Detect Stops in GeoTag Data (Armfield)
+# Stop Detector and Visualizer in Movement Data (Armfield)
 
 MoveApps
 
