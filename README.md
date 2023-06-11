@@ -2,7 +2,7 @@
 
 MoveApps
 
-Github repository: *https://github.com/Margaux-Armfield/movement_app* 
+Github repository: *https://github.com/Margaux-Armfield/stop_detector.git* 
 
 ## Description
 
