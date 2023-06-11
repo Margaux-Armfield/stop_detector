@@ -14,7 +14,7 @@ class TestMoveAppsIo(TestCase):
         actual = self.sut.create_artifacts_file('artifact-file.xyz')
 
         # verify
-        self.assertEqual(os.path.join('./resources/output/artifact-file.xyz'), actual)
+        self.assertEqual(os.path.join('/moveapps-python-sdk/tests/resources/output/artifact-file.xyz'), actual)
 
     def test_get_app_file_path_provided_only(self):
         # prepare
