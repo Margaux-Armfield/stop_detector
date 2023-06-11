@@ -200,8 +200,7 @@ class App(object):
         return data
 
     def generate_plot(self) -> None:
-        """ Creates a map to display stops and final trajectories.
-        """
+        """ Creates a map to display stops and final trajectories. """
         stops = self.final_stop_points.copy() if self.app_config.final_stops_only else self.all_stop_points.copy()
         if len(stops) > 0:
             stops['start_time'] = stops['start_time'].astype(str)
