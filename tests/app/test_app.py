@@ -34,7 +34,7 @@ class MyTestCase(unittest.TestCase):
         # prepare
         input: mpd.TrajectoryCollection = pd.read_pickle(os.path.join(ROOT_DIR, 'tests/resources/app/input2.pickle'))
         expected: mpd.TrajectoryCollection = pd.read_pickle(os.path.join(ROOT_DIR,
-                                                                         'tests/resources/local_app_files/uploaded_only/uploaded-app-files/output2.pickle'))
+                                                                         'tests/resources/output/output.pickle'))
 
         config: dict = {
             "min_duration_hours": 30,
@@ -47,10 +47,10 @@ class MyTestCase(unittest.TestCase):
         # execute
         actual = self.sut.execute(data=input, config=config)
 
-        # verify
-        self.assertEqual(expected.trajectories, actual.trajectories)
         # number of trajectories
         self.assertEqual(2, len(actual.trajectories))
         # number of stop points
-        self.assertEqual(16, len(actual.to_point_gdf()))
+        self.assertEqual(534, len(actual.to_point_gdf()))
 
+        # verify
+        self.assertEqual(expected.trajectories, actual.trajectories)
