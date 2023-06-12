@@ -217,14 +217,17 @@ class App(object):
 
             if self.app_config.display_trajectories_after_stops and len(segments) > 0:
                 # add final segments to map
-                segments_as_dataframe = TrajectoryCollection(segments).to_traj_gdf().geometry
+                segments_as_dataframe = TrajectoryCollection(segments).to_traj_gdf()
 
                 for i in range(len(segments_as_dataframe)):
                     locations = []
-                    for j in segments_as_dataframe[i].coords:
+                    for j in segments_as_dataframe.geometry[i].coords:
                         locations.append((j[1], j[0]))
 
-                    folium.PolyLine(locations, color="red", weight=2.5, opacity=1).add_to(folium_map)
+                    folium.PolyLine(locations,
+                                    column=segments_as_dataframe["traj_id"], color="red",
+                                    tooltip=segments_as_dataframe["traj_id"][i],
+                                    weight=1.5, opacity=1).add_to(folium_map)
 
             map_output_hmtl = stops.explore(
                 column="traj_id",
