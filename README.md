@@ -9,6 +9,8 @@ Github repository: *https://github.com/Margaux-Armfield/stop_detector.git*
 Identify and display stops in trajectory data from geotags. Set the time (in hours) and distance (meters) that is 
 considered a "stop". Stops are displayed on a map, with the option to view any subsequent movement after the stop.
 
+![Caribou Example GIF](documentation/example_map.gif)
+
 ## Documentation
 
 ### Intended Use
@@ -16,15 +18,16 @@ considered a "stop". Stops are displayed on a map, with the option to view any s
 This app is intended to be used to aid in analysis of movement data from animal geotags.
 
 Stop detection can be useful for a number of conservation interests, as a "long stop" can indicate than an animals has:
-(1) died / been poached
-(2) lost its tag
-(3) is remaining stationary for some other reason related to its biology / life history (hibernation, birth, etc.)
 
-In order to detect "long stops", this application makes use of the MovingPandas python library and allows the user to 
-define a "stop" of interest via the configuration settings (see *Settings*).
+(1) died / been poached  
+(2) lost its tag  
+(3) is remaining stationary for some other reason related to its biology / life history (hibernation, birth, etc.)  
+
+In order to detect stops, this application makes use of the MovingPandas Python library and allows the user to 
+define a "stop of interest" via the configuration settings (see **Settings**).
 
 Furthermore, the stops detected are displayed on a map, along with any subsequent movement after the stop began 
-if desired (see Settings). Viewing the trajectory after the stop began may be useful in determining which of the 
+if desired (see **Settings**). Viewing the trajectory after the stop began may be useful in determining which of the 
 scenarios (death, tag loss, injury, etc) the stop actually represents. For example, if a user is trying to detect 
 deaths or tag loss, a subsequent movement of 200,000 meters could indicate that the animal has not died, but stopped 
 for some other reason. Thus, the user could consider re-running the application with more conservative settings 
@@ -71,7 +74,7 @@ MovingPandas TrajectoryCollection in Movebank format
 ### Output data
 
 MovingPandas TrajectoryCollection in Movebank format: either the original data or the trajectories of detected stops
-(from stop `start_time` to `final_observation_time`), depending on user configuration (see *Settings*).
+(from stop `start_time` to `final_observation_time`), depending on user configuration (see **Settings**).
 
 ### Artefacts
 
