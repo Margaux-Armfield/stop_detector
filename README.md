@@ -46,12 +46,16 @@ and sees the following map at output:
 
 ![Caribou Example GIF](documentation/example_map.gif)
 
-This map shows the location of stop points, along with the trajectory of the animal following the stop. We can see that 
-many of these animals go on to travel great distances, making a death or tag loss unlikely.
+This map shows the location of stop points, along with the trajectory of the animal following the stop. We can hover 
+over the trajectory to see the trajectory ID, or click the trajectory to see the bounding box encompassing that 
+trajectory. This makes it easier to identify which trajectory is associated with a given stop point.
+
+We can see based on the red trajectories that many of these animals go on to travel great distances after the stop 
+took place, making a death or tag loss unlikely.
 
 Perhaps 120 hours spent within 100 meters is not a conservative enough test for whether a caribou has died. We 
 increase the stop_duration to 150 hours, and get the following result, which shows much less post-stop movement and 
-fewer individuals:
+fewer stop points:
 
 ![Caribou Example GIF 2](documentation/example_map2.gif)
 

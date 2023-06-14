@@ -89,7 +89,7 @@ class App(object):
             return trajectory_utils.convert_time_ranges_to_segments(traj, time_range)[0]
         return None
 
-    def add_stop_data(self, stop: GeoDataFrame, trajectory):
+    def add_stop_data(self, stop: GeoDataFrame, trajectory) -> Optional[Trajectory]:
         """ Add data for stop and segment after stop.
         :param stop: the stop point to analyze
         :param trajectory: the trajectory that the stop point is part of
@@ -136,8 +136,6 @@ class App(object):
         if not stop_points.empty:
             # sort by end time
             stop_points.sort_values(by=['end_time'], ascending=True)
-            if len(stop_points) > 1:
-                pass
 
             if not self.app_config.final_stops_only:
                 # get all stop points besides the final one
@@ -203,13 +201,28 @@ class App(object):
         """ Creates a map to display stops and final trajectories. """
         stops = self.final_stop_points.copy() if self.app_config.final_stops_only else self.all_stop_points.copy()
         if len(stops) > 0:
-            stops['start_time'] = stops['start_time'].astype(str)
-            stops['end_time'] = stops['end_time'].astype(str)
-            stops['final_observation_time'] = stops['final_observation_time'].astype(str)
-            stops["duration_s"] = stops['duration_s'].astype(str)
-            stops["time_tracked_since_stop_began"] = stops['time_tracked_since_stop_began'].astype(str)
+            # rename fields to be more human friendly
+            stops['Stop Start Time'] = stops['start_time'].astype(str)
+            stops['Stop End Time'] = stops['end_time'].astype(str)
+            stops['Final Observation Time'] = stops['final_observation_time'].astype(str)
+            stops["Stop Duration in Hours"] = (stops['duration_s'] / 3600).astype(str)
+            stops["Time Tracked Since Stop Began"] = stops['time_tracked_since_stop_began'].astype(str)
+            stops.index = stops.index.rename("Stop ID")
+            # drop duplicates
+            stops = stops.drop(
+                columns=['duration_s',
+                         'start_time',
+                         'end_time',
+                         'final_observation_time',
+                         'time_tracked_since_stop_began'])
+            stops = stops.rename(
+                columns={'distance_traveled_since_stop_began': 'Distance Traveled Since Stop Began (meters)',
+                         'traj_id': 'Traj ID',
+                         'average_rate_since_stop_began': "Average Rate Since Stop Began (meters / second)",
+                         'mean_rate_all_tracks': 'Mean Rate of All Tracks (meters / second)'})
 
-            folium_map = folium.Map(location=[stops.dissolve().centroid.y.iloc[0], stops.dissolve().centroid.x.iloc[0]],
+            folium_map = folium.Map(location=[stops.dissolve().centroid.y.iloc[0],
+                                              stops.dissolve().centroid.x.iloc[0]],
                                     zoom_start=6)
 
             segments = self.trajectories_after_final_stop if self.app_config.final_stops_only \
@@ -230,14 +243,17 @@ class App(object):
                                     weight=1.5, opacity=1).add_to(folium_map)
 
             map_output_hmtl = stops.explore(
-                column="traj_id",
-                tooltip="traj_id",
+                column="Traj ID",
+                tooltip="Traj ID",
                 m=folium_map,
                 legend=True,
                 popup=True,  # show all values in popup (on click)
-                cmap="tab20",  # use "Set1" matplotlib colormap
+                cmap="tab20",  # use "tab20" matplotlib colormap
                 style_kwds=dict(color="black"),  # use black outline
-                marker_kwds=dict(radius=7, fill=True, opacity=1),  # make marker radius 10px with fill
+                popup_kwds={"min_width": 500,
+                            "max_width": 800
+                            },
+                marker_kwds=dict(radius=7, fill=True, opacity=1),  # make marker radius 7px with fill
             )
 
             map_output_hmtl.save(self.moveapps_io.create_artifacts_file('map.html'))
