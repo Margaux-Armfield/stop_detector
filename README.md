@@ -9,7 +9,7 @@ Github repository: *https://github.com/Margaux-Armfield/stop_detector.git*
 Identify and display stops in trajectory data from geotags. Set the time (in hours) and distance (meters) that is 
 considered a "stop". Stops are displayed on a map, with the option to view any subsequent movement after the stop.
 
-![Caribou Example GIF](documentation/example_map.gif)
+![Caribou Example GIF](documentation/example_map3.gif)
 
 ## Documentation
 
