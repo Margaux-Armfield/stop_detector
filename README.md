@@ -44,7 +44,7 @@ the user sets the app configuration to the following:
 
 and sees the following map at output:
 
-![Caribou Example GIF](documentation/example_map.gif)
+![Caribou Example GIF](documentation/example_map3.gif)
 
 This map shows the location of stop points, along with the trajectory of the animal following the stop. We can hover 
 over the trajectory to see the trajectory ID, or click the trajectory to see the bounding box encompassing that 
