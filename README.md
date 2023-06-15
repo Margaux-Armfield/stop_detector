@@ -7,9 +7,10 @@ Github repository: *https://github.com/Margaux-Armfield/stop_detector.git*
 ## Description
 
 Identify and display stops in trajectory data from geotags. Set the time (in hours) and distance (meters) that is 
-considered a "stop". Stops are displayed on a map, with the option to view any subsequent movement after the stop.
+considered a "stop". Stops are displayed on a map, with the option to display any subsequent movement after the stop. 
+Movement that the animal did after the stop began is referred to here as "trajectory after stop".
 
-![Caribou Example GIF](documentation/example_map3.gif)
+![Caribou Example GIF](documentation/120_hours.gif)
 
 ## Documentation
 
@@ -21,7 +22,7 @@ Stop detection can be useful for a number of conservation interests, as a "long 
 
 (1) died / been poached  
 (2) lost its tag  
-(3) is remaining stationary for some other reason related to its biology / life history (hibernation, birth, etc.)  
+(3) is remaining stationary for some other reason related to its biology / life history (hibernation, injury, birth, etc.)  
 
 In order to detect stops, this application makes use of the MovingPandas Python library and allows the user to 
 define a "stop of interest" via the configuration settings (see **Settings**).
@@ -44,20 +45,25 @@ the user sets the app configuration to the following:
 
 and sees the following map at output:
 
-![Caribou Example GIF](documentation/example_map3.gif)
+**Caribou Data with Stop Duration=120 hours, Stop Diameter=100 meters**
+
+![Caribou Example GIF](documentation/120_hours2.gif)
 
 This map shows the location of stop points, along with the trajectory of the animal following the stop. We can hover 
-over the trajectory to see the trajectory ID, or click the trajectory to see the bounding box encompassing that 
-trajectory. This makes it easier to identify which trajectory is associated with a given stop point.
+over the trajectory to see the trajectory ID and distinguish it from overlapping trajectories through a color change.
+Clicking the trajectory shows the bounding box encompassing that trajectory. We can tell which trajectory is associated
+with a given stop point based on the Tractory ID and Stop ID.
 
 We can see based on the red trajectories that many of these animals go on to travel great distances after the stop 
 took place, making a death or tag loss unlikely.
 
 Perhaps 120 hours spent within 100 meters is not a conservative enough test for whether a caribou has died. We 
-increase the stop_duration to 150 hours, and get the following result, which shows much less post-stop movement and 
-fewer stop points:
+increase the stop_duration to 150 hours, and get the following result, which shows shorter trajectories after stops
+(indicating less post-stop movement) and fewer stop points:
 
-![Caribou Example GIF 2](documentation/example_map2.gif)
+**Caribou Data with Stop Duration=150 hours, Stop Diameter=100 meters**
+
+![Caribou Example GIF 2](documentation/150_hours.gif)
 
 In addition to looking at the distance traveled since the detected stop, users may want to look at other metrics 
 included in the output CSV files to determine if a stop represents a death or tag loss. For example, we could compare 

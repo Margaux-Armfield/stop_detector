@@ -232,15 +232,54 @@ class App(object):
                 # add final segments to map
                 segments_as_dataframe = TrajectoryCollection(segments).to_traj_gdf()
 
+                # style function
+                style_function = lambda x: {
+                    # specifying properties from GeoJSON
+                    'color': x['properties']['stroke'],
+                    'opacity': 0.50,
+                    'weight': x['properties']['stroke-width']
+                }
+
+                # highlight function (change displayed on hover)
+                highlight_function = lambda x: {
+                    'color': 'blue',
+                    'opacity': 1.0,
+                    # specifying properties from GeoJSON
+                    'weight': x['properties']['stroke-width']
+                }
+
                 for i in range(len(segments_as_dataframe)):
                     locations = []
                     for j in segments_as_dataframe.geometry[i].coords:
-                        locations.append((j[1], j[0]))
+                        locations.append([j[0], j[1]])
 
-                    folium.PolyLine(locations,
-                                    column=segments_as_dataframe["traj_id"], color="red",
-                                    tooltip=segments_as_dataframe["traj_id"][i],
-                                    weight=1.5, opacity=1).add_to(folium_map)
+                    trajectory_geojson = {
+                        "type": "FeatureCollection",
+                        "features": [
+                            {
+                                "type": "Feature",
+                                "properties": {
+                                    "stroke": "#aa0000",
+                                    "stroke-width": 4,
+                                    "stroke-opacity": 1
+                                },
+                                "geometry": {
+                                    "type": "LineString",
+                                    "coordinates": locations
+                                }
+                            },
+                        ]
+                    }
+                    # add trajectory to map using folium geojson and support highlighting on hover
+                    traj_info = folium.features.GeoJson(
+                        trajectory_geojson,
+                        name='trajectory',
+                        control=True,
+                        style_function=style_function,
+                        highlight_function=highlight_function,
+                        tooltip=segments_as_dataframe["traj_id"][i]
+                    )
+                    folium_map.add_child(traj_info)
 
             map_output_hmtl = stops.explore(
                 column="Traj ID",
@@ -250,9 +289,7 @@ class App(object):
                 popup=True,  # show all values in popup (on click)
                 cmap="tab20",  # use "tab20" matplotlib colormap
                 style_kwds=dict(color="black"),  # use black outline
-                popup_kwds={"min_width": 500,
-                            "max_width": 800
-                            },
+                popup_kwds=dict(min_width=500,max_width=800),
                 marker_kwds=dict(radius=7, fill=True, opacity=1),  # make marker radius 7px with fill
             )
 
