@@ -7,8 +7,7 @@ Github repository: *https://github.com/Margaux-Armfield/stop_detector.git*
 ## Description
 
 Identify and display stops in trajectory data from geotags. Set the time (in hours) and distance (meters) that is 
-considered a "stop". Stops are displayed on a map, with the option to display any subsequent movement after the stop. 
-Movement that the animal did after the stop began is referred to here as "trajectory after stop".
+considered a stop. Stops are displayed on a map, with the option to display any subsequent movement after the stop.
 
 ![Caribou Example GIF](documentation/120_hours.gif)
 
@@ -16,7 +15,7 @@ Movement that the animal did after the stop began is referred to here as "trajec
 
 ### Intended Use
 
-This app is intended to be used to aid in analysis of movement data from animal geotags.
+This app is intended to aid in analysis of movement data from animal geotags.
 
 Stop detection can be useful for a number of conservation interests, as a "long stop" can indicate than an animals has:
 
@@ -52,9 +51,9 @@ and sees the following map at output:
 This map shows the location of stop points, along with the trajectory of the animal following the stop. We can hover 
 over the trajectory to see the trajectory ID and distinguish it from overlapping trajectories through a color change.
 Clicking the trajectory shows the bounding box encompassing that trajectory. We can tell which trajectory is associated
-with a given stop point based on the Tractory ID and Stop ID.
+with a given stop point based on matching the tractory's ID to the point's Stop ID.
 
-We can see based on the red trajectories that many of these animals go on to travel great distances after the stop 
+We can see from the red trajectories that many of these animals go on to travel great distances after the stop 
 took place, making a death or tag loss unlikely.
 
 Perhaps 120 hours spent within 100 meters is not a conservative enough test for whether a caribou has died. We 
@@ -88,7 +87,7 @@ MovingPandas TrajectoryCollection in Movebank format: either the original data o
 
 ### Artefacts
 
-- `map.html` - an HTML file containing the Folium map, displaying stop points, with option to hover over points to show more data and zoom in / out.
+- `map.html` - an HTML file containing the Folium map, displaying stop points, with option to hover over points to show more data and zoom in / out. The map optionally displays the animal's trajectories after the stops began as well.
 - `final_stops.csv` - a csv file containing the final stop points for individuals (i.e. most recent stop if there are more than one for a given individual), detected matching the configuration parameters, with the following columns: 
   - `stop_id`: string - the unique identifier for the stop (trajectory_id + start_time of stop)
   - `geometry`: point - the latitude and longitude position of the stop
