@@ -91,7 +91,7 @@ MovingPandas TrajectoryCollection in Movebank format: either the original data o
 - `final_stops.csv` - a csv file containing the final stop points for individuals (i.e. most recent stop if there are more than one for a given individual), detected matching the configuration parameters, with the following columns: 
   - `stop_id`: string - the unique identifier for the stop (trajectory_id + start_time of stop)
   - `geometry`: point - the latitude and longitude position of the stop
-  - `start_time`: timestamp - the time the stop began,
+  - `start_time`: timestamp - the time the stop began
   - `end_time`: timestamp - the time the stop ended
   - `traj_id`: string - the unique identifier of the trajectory that this stop was detected in 
   - `duration_s`: time duration - the time duration in seconds of the stop
@@ -100,9 +100,9 @@ MovingPandas TrajectoryCollection in Movebank format: either the original data o
   - `mean_rate_all_tracks`: speed (meters per second) - the average rate in meters per second that the animal was moving across all observations
   - `distance_traveled_since_stop_began`: distance (meters) - the number of meters that the animal has travel since the stop began
   - `average_rate_since_stop_began`: speed (meters per second) - - the average rate in meters per second that the animal was moving after the stop began
-If the setting `Final stop only` is `False`, an additional csv file will be output:
-- `all_stops.csv` - a csv file containing all the stop points detected matching the configuration parameters, with the following columns:
 
+If the setting `Final stop only` is `False`, an additional csv file will be output:
+  - `all_stops.csv` - a csv file containing all the stop points detected matching the configuration parameters, with the same contents as above. 
 
 ### Settings 
 

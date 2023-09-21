@@ -9,11 +9,8 @@ import pandas as pd
 from geopandas import GeoDataFrame
 from movingpandas import TrajectoryCollection, TrajectoryStopDetector, Trajectory
 from movingpandas import trajectory_utils
-from movingpandas.geometry_utils import mrr_diagonal
-from movingpandas.time_range_utils import TemporalRange, TemporalRangeWithTrajId
-from movingpandas.trajectory_utils import convert_time_ranges_to_segments
+from movingpandas.time_range_utils import TemporalRange
 from pandas import Series, Timestamp
-from shapely import MultiPoint, Point
 
 from sdk.moveapps_spec import hook_impl
 
@@ -152,21 +149,6 @@ class App(object):
 
             if final_segment is not None:
                 self.trajectories_after_final_stop.append(final_segment)
-
-    @staticmethod
-    def scale_marker_size(column: Series) -> float:
-        """ Scales a column to be used for normalized marker size.
-        :param column:
-        :return:
-        """
-        min_marker_size = 50
-        med_marker_size = 100
-        max_marker_size = 400
-        scaler = med_marker_size / column.mean()
-
-        new_column = column * scaler
-        new_column.clip(lower=min_marker_size, upper=max_marker_size)
-        return new_column
 
     @hook_impl
     def execute(self, data: TrajectoryCollection, config: dict) -> TrajectoryCollection:
