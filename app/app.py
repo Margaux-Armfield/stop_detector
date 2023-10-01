@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import logging
 from dataclasses import dataclass
 from datetime import timedelta
@@ -10,7 +9,8 @@ from geopandas import GeoDataFrame
 from movingpandas import TrajectoryCollection, TrajectoryStopDetector, Trajectory
 from movingpandas import trajectory_utils
 from movingpandas.time_range_utils import TemporalRange
-from pandas import Series, Timestamp
+
+from pandas import Timestamp
 
 from sdk.moveapps_spec import hook_impl
 
