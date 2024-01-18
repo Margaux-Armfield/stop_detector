@@ -1,4 +1,4 @@
-# Stop Detector and Visualizer for Movement Data (Armfield)
+# Stop Detector and Visualizer for Movement Data
 
 MoveApps
 
