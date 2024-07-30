@@ -95,7 +95,7 @@ class App(object):
         final_observation_time = Timestamp(trajectory.df.timestamps.max())
         stop['final_observation_time'] = final_observation_time
 
-        time_tracked_since_stop = final_observation_time - stop.start_time[0]
+        time_tracked_since_stop = final_observation_time - stop.start_time.iloc[0]
         stop['time_tracked_since_stop_began'] = time_tracked_since_stop
 
         # mean_rate_all_tracks
@@ -103,7 +103,7 @@ class App(object):
         trajectory.add_speed(overwrite=True, units=("m", "s"))
         stop['mean_rate_all_tracks'] = trajectory.df["speed"].mean()
 
-        segment: Optional[Trajectory] = self.get_stop_to_end_trajectory(trajectory, stop.start_time[0])
+        segment: Optional[Trajectory] = self.get_stop_to_end_trajectory(trajectory, stop.start_time.iloc[0])
 
         # movement after final stop
         if segment is not None:
