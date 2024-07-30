@@ -6,7 +6,8 @@ dependencies:
   - python=3.10
   - pandas
   - geopandas
-  - movingpandas=0.16.0
+  - movingpandas=0.18.1
   - pluggy
   - python-dotenv
   - folium=0.14.0
+  - deprecated
