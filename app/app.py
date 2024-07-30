@@ -124,7 +124,8 @@ class App(object):
         """ Gets the stop point(s) based on configuration params and the trajectory.
         :param trajectory: the trajectory to check for stop detections
         """
-        trajectory.df.sort_values(by=['timestamps'], ascending=False)
+        time_col_name = trajectory.to_point_gdf().index.name
+        trajectory.df.sort_values(by=[time_col_name], ascending=False)
 
         detector = TrajectoryStopDetector(trajectory)
         stop_points = detector.get_stop_points(min_duration=timedelta(hours=self.app_config.min_duration_hours),
@@ -172,11 +173,23 @@ class App(object):
         if not self.app_config.final_stops_only:
             self.all_stop_points.to_csv(self.moveapps_io.create_artifacts_file('all_stops.csv'))
 
+        time_col_name = data.to_point_gdf().index.name
         if self.app_config.return_data == "trajectories":
             if self.app_config.final_stops_only:
-                return TrajectoryCollection(self.trajectories_after_final_stop, traj_id_col="traj_id")
+                return TrajectoryCollection(self.trajectories_after_final_stop,
+                                            traj_id_col="track_id",
+                                            t=time_col_name,
+                                            crs='epsg:4326',
+                                            x='coords_x', y='coords_y'
+                                            )
             else:
-                return TrajectoryCollection(self.trajectories_after_all_stops, traj_id_col="traj_id")
+                return TrajectoryCollection(
+                    self.trajectories_after_all_stops,
+                    traj_id_col="track_id",
+                    t=time_col_name,
+                    crs='epsg:4326',
+                    x='coords_x', y='coords_y'
+                )
         return data
 
     def generate_plot(self) -> None:
@@ -211,8 +224,13 @@ class App(object):
                 else self.trajectories_after_all_stops
 
             if self.app_config.display_trajectories_after_stops and len(segments) > 0:
-                # add final segments to map
-                segments_as_dataframe = TrajectoryCollection(segments).to_traj_gdf()
+                segments_as_dataframe = TrajectoryCollection(
+                    segments,
+                    traj_id_col="track_id",
+                    crs='epsg:4326',
+                    x='coords_x',
+                    y='coords_y'
+                ).to_traj_gdf()
 
                 # style function
                 style_function = lambda x: {
@@ -271,7 +289,7 @@ class App(object):
                 popup=True,  # show all values in popup (on click)
                 cmap="tab20",  # use "tab20" matplotlib colormap
                 style_kwds=dict(color="black"),  # use black outline
-                popup_kwds=dict(min_width=500,max_width=800),
+                popup_kwds=dict(min_width=500, max_width=800),
                 marker_kwds=dict(radius=7, fill=True, opacity=1),  # make marker radius 7px with fill
             )
 
