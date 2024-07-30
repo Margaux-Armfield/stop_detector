@@ -10,3 +10,4 @@ dependencies:
   - pluggy
   - python-dotenv
   - folium=0.14.0
+  - deprecated
