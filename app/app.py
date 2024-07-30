@@ -8,7 +8,7 @@ import pandas as pd
 from geopandas import GeoDataFrame
 from movingpandas import TrajectoryCollection, TrajectoryStopDetector, Trajectory
 from movingpandas import trajectory_utils
-from movingpandas.time_range_utils import TemporalRange
+from movingpandas.spatiotemporal_utils import TRange
 
 from pandas import Timestamp
 
@@ -81,7 +81,7 @@ class App(object):
         :return: the trajectory segment between the stop end time and the final observation
         """
         final_observation_time = traj.df.timestamps.max()
-        time_range = [TemporalRange(stop_end_time, final_observation_time)]
+        time_range = [TRange(stop_end_time, final_observation_time)]
         if len(trajectory_utils.convert_time_ranges_to_segments(traj, time_range)) >= 1:
             return trajectory_utils.convert_time_ranges_to_segments(traj, time_range)[0]
         return None
@@ -174,18 +174,20 @@ class App(object):
             self.all_stop_points.to_csv(self.moveapps_io.create_artifacts_file('all_stops.csv'))
 
         time_col_name = data.to_point_gdf().index.name
+        track_id_col_name = data.get_traj_id_col()
         if self.app_config.return_data == "trajectories":
             if self.app_config.final_stops_only:
-                return TrajectoryCollection(self.trajectories_after_final_stop,
-                                            traj_id_col="track_id",
-                                            t=time_col_name,
-                                            crs='epsg:4326',
-                                            x='coords_x', y='coords_y'
-                                            )
+                return TrajectoryCollection(
+                    data=self.trajectories_after_final_stop,
+                    traj_id_col=track_id_col_name,
+                    t=time_col_name,
+                    crs='epsg:4326',
+                    x='coords_x', y='coords_y'
+                )
             else:
                 return TrajectoryCollection(
-                    self.trajectories_after_all_stops,
-                    traj_id_col="track_id",
+                    data=self.trajectories_after_all_stops,
+                    traj_id_col=track_id_col_name,
                     t=time_col_name,
                     crs='epsg:4326',
                     x='coords_x', y='coords_y'
@@ -225,8 +227,7 @@ class App(object):
 
             if self.app_config.display_trajectories_after_stops and len(segments) > 0:
                 segments_as_dataframe = TrajectoryCollection(
-                    segments,
-                    traj_id_col="track_id",
+                    data=segments,
                     crs='epsg:4326',
                     x='coords_x',
                     y='coords_y'
