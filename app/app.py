@@ -165,7 +165,7 @@ class App(object):
         for tr in data.trajectories:
             self.get_stops(tr)
 
-        self.generate_plot()
+        self.generate_plot(track_id_col=data.get_traj_id_col())
 
         # write csv output files
         self.final_stop_points.to_csv(self.moveapps_io.create_artifacts_file('final_stops.csv'))
@@ -194,7 +194,7 @@ class App(object):
                 )
         return data
 
-    def generate_plot(self) -> None:
+    def generate_plot(self, track_id_col: str) -> None:
         """ Creates a map to display stops and final trajectories. """
         stops = self.final_stop_points.copy() if self.app_config.final_stops_only else self.all_stop_points.copy()
         if len(stops) > 0:
@@ -214,7 +214,7 @@ class App(object):
                          'time_tracked_since_stop_began'])
             stops = stops.rename(
                 columns={'distance_traveled_since_stop_began': 'Distance Traveled Since Stop Began (meters)',
-                         'traj_id': 'Traj ID',
+                         'traj_id': 'Traj ID',  # stop detection is hard coded to return Traj ID
                          'average_rate_since_stop_began': "Average Rate Since Stop Began (meters / second)",
                          'mean_rate_all_tracks': 'Mean Rate of All Tracks (meters / second)'})
 
@@ -278,7 +278,7 @@ class App(object):
                         control=True,
                         style_function=style_function,
                         highlight_function=highlight_function,
-                        tooltip=segments_as_dataframe["traj_id"][i]
+                        tooltip=segments_as_dataframe[track_id_col][i]
                     )
                     folium_map.add_child(traj_info)
 
