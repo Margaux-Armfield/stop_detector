@@ -80,7 +80,7 @@ class App(object):
         :param stop_end_time: the time that the last stop ended
         :return: the trajectory segment between the stop end time and the final observation
         """
-        final_observation_time = traj.df.timestamps.max()
+        final_observation_time = traj.df.index.max()
         time_range = [TRange(stop_end_time, final_observation_time)]
         if len(trajectory_utils.convert_time_ranges_to_segments(traj, time_range)) >= 1:
             return trajectory_utils.convert_time_ranges_to_segments(traj, time_range)[0]
@@ -92,7 +92,7 @@ class App(object):
         :param trajectory: the trajectory that the stop point is part of
         """
         # check if there is further movement after the final stop point
-        final_observation_time = Timestamp(trajectory.df.timestamps.max())
+        final_observation_time = Timestamp(trajectory.df.index.max())
         stop['final_observation_time'] = final_observation_time
 
         time_tracked_since_stop = final_observation_time - stop.start_time.iloc[0]
