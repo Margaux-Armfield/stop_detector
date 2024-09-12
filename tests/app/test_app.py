@@ -15,7 +15,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_app_returns_input(self):
         # prepare
-        expected: mpd.TrajectoryCollection = pd.read_pickle(os.path.join(ROOT_DIR, 'tests/resources/app/input2.pickle'))
+        expected: mpd.TrajectoryCollection = pd.read_pickle(os.path.join(ROOT_DIR, 'tests/resources/app/input2_LatLon.pickle'))
         config: dict = {}
 
         # execute
@@ -23,7 +23,7 @@ class MyTestCase(unittest.TestCase):
 
         # verif
         self.assertEqual(expected, actual)
-
+        
     def test_input2(self):
         """ A test for if the expected stop points and trajectories are returned. """
         # prepare
