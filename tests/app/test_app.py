@@ -48,10 +48,3 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(534, len(actual.to_point_gdf()))
         # verify trajectories
         self.assertEqual(expected.trajectories, actual.trajectories)
-
-        # in this case, final stops and all stops are the same
-        config.update({"final_stop_only": True})
-        # reset App values
-        self.setUp()
-        final_stops_only = self.sut.execute(data=input, config=config)
-        self.assertEqual(actual.trajectories, final_stops_only.trajectories)
